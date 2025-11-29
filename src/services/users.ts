@@ -35,3 +35,9 @@ export const getTeamMembers = async (): Promise<User[]> => {
   const response = await api.get<User[]>('/users/team-members');
   return response.data;
 };
+
+// 내 프로필 수정
+export const updateProfile = async (data: UpdateUserRequest): Promise<User> => {
+  const response = await api.patch<User>('/users/me', data);
+  return response.data;
+};
