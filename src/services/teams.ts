@@ -111,3 +111,65 @@ export const createTeamShare = async (teamId: string, data: CreateShareRequest):
 export const deleteTeamShare = async (shareId: string): Promise<void> => {
   await api.delete(`/teams/shares/${shareId}`);
 };
+
+// ==================== 팀원별 작업량 통계 ====================
+
+export interface MemberStat {
+  member: {
+    id: string;
+    name: string;
+    profileImageUrl: string | null;
+  };
+  completedTasks: number;
+  inProgressTasks: number;
+  totalAssigned: number;
+  createdTasks: number;
+}
+
+export interface TeamMemberStats {
+  teamId: string;
+  teamName: string;
+  period: {
+    days: number;
+    startDate: string;
+    endDate: string;
+  };
+  stats: MemberStat[];
+}
+
+export interface DailyStat {
+  date: string;
+  count: number;
+}
+
+export interface MemberDailyStat {
+  member: {
+    id: string;
+    name: string;
+    profileImageUrl: string | null;
+  };
+  dailyStats: DailyStat[];
+}
+
+export interface TeamMemberDailyStats {
+  teamId: string;
+  teamName: string;
+  dates: string[];
+  memberDailyStats: MemberDailyStat[];
+}
+
+// 팀원별 작업량 통계 조회
+export const getTeamMemberStats = async (teamId: string, days?: number): Promise<TeamMemberStats> => {
+  const response = await api.get<TeamMemberStats>(`/teams/${teamId}/stats`, {
+    params: days ? { days } : undefined,
+  });
+  return response.data;
+};
+
+// 팀원별 일별 작업량 통계 조회 (그래프용)
+export const getTeamMemberDailyStats = async (teamId: string, days?: number): Promise<TeamMemberDailyStats> => {
+  const response = await api.get<TeamMemberDailyStats>(`/teams/${teamId}/stats/daily`, {
+    params: days ? { days } : undefined,
+  });
+  return response.data;
+};

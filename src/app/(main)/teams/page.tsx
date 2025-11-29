@@ -2,9 +2,19 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Users, MoreHorizontal, Trash2, Edit, UserPlus, ChevronDown, ChevronUp, ArrowRightLeft } from 'lucide-react';
+import { Plus, Users, MoreHorizontal, Trash2, Edit, UserPlus, ChevronDown, ChevronUp, ArrowRightLeft, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +51,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { getTeams, getTeam, createTeam, deleteTeam, transferMember } from '@/services/teams';
+import { getTeams, getTeam, createTeam, deleteTeam, transferMember, getTeamMemberStats } from '@/services/teams';
 import { useAuthStore } from '@/stores/auth';
 import type { Team, User, UserRole } from '@/types';
 import { Kr2GithubTools } from '@/components/github/kr2-github-tools';
@@ -76,6 +86,12 @@ export default function TeamsPage() {
   const { data: expandedTeamData, isLoading: isLoadingTeamMembers } = useQuery({
     queryKey: ['team', expandedTeamId],
     queryFn: () => getTeam(expandedTeamId!),
+    enabled: !!expandedTeamId,
+  });
+
+  const { data: teamStats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['team-stats', expandedTeamId],
+    queryFn: () => getTeamMemberStats(expandedTeamId!, 30),
     enabled: !!expandedTeamId,
   });
 
@@ -310,6 +326,61 @@ export default function TeamsPage() {
                         </p>
                       )}
                     </div>
+
+                    {/* 팀원별 작업량 그래프 */}
+                    {expandedTeamId === team.id && (
+                      <div className="mt-6 pt-4 border-t">
+                        <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4" />
+                          팀원별 작업량 (최근 30일)
+                        </h4>
+                        {isLoadingStats ? (
+                          <Skeleton className="h-48 w-full" />
+                        ) : teamStats && teamStats.stats.length > 0 ? (
+                          <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart
+                                data={teamStats.stats.map((s) => ({
+                                  name: s.member.name,
+                                  '완료': s.completedTasks,
+                                  '진행중': s.inProgressTasks,
+                                }))}
+                                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                <XAxis
+                                  dataKey="name"
+                                  tick={{ fontSize: 11 }}
+                                  tickLine={false}
+                                  axisLine={false}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: 11 }}
+                                  tickLine={false}
+                                  axisLine={false}
+                                  allowDecimals={false}
+                                />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: 'hsl(var(--popover))',
+                                    border: '1px solid hsl(var(--border))',
+                                    borderRadius: '8px',
+                                    fontSize: '12px',
+                                  }}
+                                />
+                                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                <Bar dataKey="완료" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="진행중" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            작업 데이터가 없습니다.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </CollapsibleContent>
               </Card>
