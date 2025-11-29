@@ -174,12 +174,12 @@ export default function DailyReportPage() {
         <CardContent>
           <div className="flex items-center gap-4">
             <div className="flex-1 max-w-sm">
-              <Select value={selectedRepo} onValueChange={setSelectedRepo}>
+              <Select value={selectedRepo || 'all'} onValueChange={(val) => setSelectedRepo(val === 'all' ? '' : val)}>
                 <SelectTrigger>
                   <SelectValue placeholder="모든 리포지토리" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">모든 리포지토리</SelectItem>
+                  <SelectItem value="all">모든 리포지토리</SelectItem>
                   {isLoadingRepos ? (
                     <SelectItem value="loading" disabled>로딩 중...</SelectItem>
                   ) : (
