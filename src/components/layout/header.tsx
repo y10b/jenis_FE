@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bell, Moon, Sun, LogIn, LogOut, Clock } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useNotificationSound } from '@/hooks/use-notification-sound';
 
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -36,12 +37,29 @@ export function Header() {
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
   const [attendanceType, setAttendanceType] = useState<AttendanceType>('CHECK_IN');
   const [note, setNote] = useState('');
+  const prevUnreadCountRef = useRef<number | null>(null);
+  const { playSound } = useNotificationSound();
 
   const { data: unreadData } = useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: getUnreadCount,
     refetchInterval: 30000,
   });
+
+  // 새 알림이 왔을 때 소리 재생
+  useEffect(() => {
+    if (unreadData?.count !== undefined) {
+      const currentCount = unreadData.count;
+      const prevCount = prevUnreadCountRef.current;
+
+      // 이전 카운트가 있고, 현재 카운트가 더 크면 새 알림이 온 것
+      if (prevCount !== null && currentCount > prevCount) {
+        playSound();
+      }
+
+      prevUnreadCountRef.current = currentCount;
+    }
+  }, [unreadData?.count, playSound]);
 
   const { data: todayStatus } = useQuery({
     queryKey: ['attendance', 'today'],

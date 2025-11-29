@@ -132,3 +132,23 @@ export const getKr2RepoInfo = async (repo: string): Promise<RepoInfo> => {
   });
   return response.data;
 };
+
+// ==================== 일일 보고서 관련 API ====================
+
+export interface TodayPR {
+  number: number;
+  title: string;
+  url: string;
+  state: string;
+  createdAt: string;
+  repo: string;
+  labels: string[];
+}
+
+// 당일 PR 목록 조회
+export const getTodayPRs = async (repo?: string): Promise<TodayPR[]> => {
+  const response = await api.get('/integrations/github/today-prs', {
+    params: repo ? { repo } : undefined,
+  });
+  return response.data;
+};

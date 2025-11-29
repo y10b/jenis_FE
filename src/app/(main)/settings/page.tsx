@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Key, Github, Loader2, ExternalLink, Check, X } from 'lucide-react';
+import { Key, Github, Loader2, ExternalLink, Check, X, MessageSquare } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -20,20 +22,51 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { changePassword } from '@/services/users';
+import { changePassword, getSlackTemplate, updateSlackTemplate } from '@/services/users';
 import { getGithubStatus, getGithubAuthUrl, disconnectGithub } from '@/services/github';
 
+const DEFAULT_SLACK_TEMPLATE = `:o2: KR2팀 Key Results = KR2-1 재구매율 40% → 60% KR2-2 NPS 55점 이상 KR2-3 추천·바이럴 유입 25% KR2-4 주요 코어 기능(보장분석 GPT, CRM3.0) 개선 3건 이상
+:a: [{{DATE}} OK, Action] :1등_메달:가장 중요하고 시급한 일부터 :a:
+
+{{PR_LIST}}`;
+
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [slackTemplateDialogOpen, setSlackTemplateDialogOpen] = useState(false);
+  const [slackTemplate, setSlackTemplate] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // GitHub 연동 성공 시 토스트 표시
+  useEffect(() => {
+    if (searchParams.get('github') === 'success') {
+      toast.success('GitHub 연동이 완료되었습니다.');
+      // URL에서 쿼리 파라미터 제거
+      window.history.replaceState({}, '', '/settings');
+    }
+  }, [searchParams]);
 
   // GitHub 연동 상태 조회
   const { data: githubStatus, isLoading: isLoadingGithub, refetch: refetchGithub } = useQuery({
     queryKey: ['github-status'],
     queryFn: getGithubStatus,
   });
+
+  // 슬랙 템플릿 조회
+  const { data: slackTemplateData, isLoading: isLoadingSlackTemplate } = useQuery({
+    queryKey: ['slack-template'],
+    queryFn: getSlackTemplate,
+  });
+
+  // 슬랙 템플릿 다이얼로그 열릴 때 기존 값 로드
+  useEffect(() => {
+    if (slackTemplateDialogOpen && slackTemplateData) {
+      setSlackTemplate(slackTemplateData.template || DEFAULT_SLACK_TEMPLATE);
+    }
+  }, [slackTemplateDialogOpen, slackTemplateData]);
 
   // 비밀번호 변경 mutation
   const changePasswordMutation = useMutation({
@@ -57,6 +90,19 @@ export default function SettingsPage() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'GitHub 연동 해제에 실패했습니다.');
+    },
+  });
+
+  // 슬랙 템플릿 저장 mutation
+  const updateSlackTemplateMutation = useMutation({
+    mutationFn: updateSlackTemplate,
+    onSuccess: () => {
+      toast.success('슬랙 보고서 템플릿이 저장되었습니다.');
+      setSlackTemplateDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['slack-template'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || '템플릿 저장에 실패했습니다.');
     },
   });
 
@@ -93,6 +139,18 @@ export default function SettingsPage() {
 
   const handleDisconnectGithub = () => {
     disconnectGithubMutation.mutate();
+  };
+
+  const handleSaveSlackTemplate = () => {
+    if (!slackTemplate.trim()) {
+      toast.error('템플릿을 입력해주세요.');
+      return;
+    }
+    updateSlackTemplateMutation.mutate(slackTemplate);
+  };
+
+  const handleResetSlackTemplate = () => {
+    setSlackTemplate(DEFAULT_SLACK_TEMPLATE);
   };
 
   return (
@@ -183,6 +241,47 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* 슬랙 일일 보고서 설정 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            슬랙 일일 보고서
+          </CardTitle>
+          <CardDescription>슬랙 일일 보고서 템플릿을 설정합니다</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">보고서 템플릿</p>
+              <p className="text-sm text-muted-foreground">
+                {isLoadingSlackTemplate ? (
+                  <Skeleton className="h-4 w-32" />
+                ) : slackTemplateData?.template ? (
+                  '템플릿이 설정되어 있습니다'
+                ) : (
+                  '기본 템플릿을 사용합니다'
+                )}
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => setSlackTemplateDialogOpen(true)}>
+              템플릿 설정
+            </Button>
+          </div>
+          <div className="mt-4 p-3 bg-muted rounded-lg">
+            <p className="text-xs text-muted-foreground mb-2">사용 가능한 변수:</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary" className="text-xs font-mono">{'{{DATE}}'}</Badge>
+              <span className="text-xs text-muted-foreground">오늘 날짜 (예: 11월 28일 금요일)</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-1">
+              <Badge variant="secondary" className="text-xs font-mono">{'{{PR_LIST}}'}</Badge>
+              <span className="text-xs text-muted-foreground">당일 PR 목록</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* 비밀번호 변경 다이얼로그 */}
       <Dialog open={passwordDialogOpen} onOpenChange={(open) => {
         setPasswordDialogOpen(open);
@@ -240,6 +339,54 @@ export default function SettingsPage() {
                 </>
               ) : (
                 '변경'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 슬랙 템플릿 다이얼로그 */}
+      <Dialog open={slackTemplateDialogOpen} onOpenChange={setSlackTemplateDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>슬랙 보고서 템플릿 설정</DialogTitle>
+            <DialogDescription>
+              일일 보고서 생성 시 사용할 템플릿을 설정합니다. {'{{DATE}}'}는 오늘 날짜로, {'{{PR_LIST}}'}는 당일 PR 목록으로 자동 대체됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="slack-template">템플릿</Label>
+              <Textarea
+                id="slack-template"
+                placeholder="슬랙 보고서 템플릿을 입력하세요..."
+                value={slackTemplate}
+                onChange={(e) => setSlackTemplate(e.target.value)}
+                rows={12}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button variant="ghost" size="sm" onClick={handleResetSlackTemplate}>
+                기본 템플릿으로 초기화
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSlackTemplateDialogOpen(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={handleSaveSlackTemplate}
+              disabled={updateSlackTemplateMutation.isPending}
+            >
+              {updateSlackTemplateMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  저장 중...
+                </>
+              ) : (
+                '저장'
               )}
             </Button>
           </DialogFooter>

@@ -41,3 +41,15 @@ export const updateProfile = async (data: UpdateUserRequest): Promise<User> => {
   const response = await api.patch<User>('/users/me', data);
   return response.data;
 };
+
+// 슬랙 보고서 템플릿 조회
+export const getSlackTemplate = async (): Promise<{ template: string | null }> => {
+  const response = await api.get<{ template: string | null }>('/users/me/slack-template');
+  return response.data;
+};
+
+// 슬랙 보고서 템플릿 저장
+export const updateSlackTemplate = async (template: string): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>('/users/me/slack-template', { template });
+  return response.data;
+};

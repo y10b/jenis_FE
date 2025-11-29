@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronUp,
   User2,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -70,6 +71,11 @@ const mainMenuItems = [
     title: '알림',
     url: '/notifications',
     icon: Bell,
+  },
+  {
+    title: '일일 보고서',
+    url: '/daily-report',
+    icon: FileText,
   },
 ];
 
