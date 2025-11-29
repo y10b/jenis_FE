@@ -252,14 +252,11 @@ export default function TeamsPage() {
                   <CardDescription className="mb-4">
                     {team.description || '설명 없음'}
                   </CardDescription>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {team._count?.members || 0}명
-                      </span>
-                    </div>
-                    <Badge variant="outline">{team.owner?.name}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      {team._count?.members || 0}명
+                    </span>
                   </div>
                 </CardContent>
                 <CollapsibleContent>

@@ -181,7 +181,7 @@ export function Kr2GithubTools() {
     );
   }
 
-  // KR2팀이 아닌 경우 표시 안함
+  // 개발팀(KR2, KR3)이 아닌 경우 표시 안함
   if (!accessStatus?.hasAccess) {
     return null;
   }
@@ -193,7 +193,7 @@ export function Kr2GithubTools() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Github className="h-5 w-5" />
-            KR2팀 GitHub 도구
+            개발팀 GitHub 도구
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -209,7 +209,7 @@ export function Kr2GithubTools() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Github className="h-5 w-5" />
-            KR2팀 GitHub 도구
+            개발팀 GitHub 도구
           </CardTitle>
           <CardDescription>
             GitHub 이슈/PR 자동화 도구
@@ -236,7 +236,7 @@ export function Kr2GithubTools() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Github className="h-5 w-5" />
-            KR2팀 GitHub 도구
+            개발팀 GitHub 도구
           </CardTitle>
           <CardDescription>
             Git 이력 기반 이슈 생성 및 PR 템플릿 자동 생성
