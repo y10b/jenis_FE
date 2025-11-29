@@ -105,28 +105,35 @@ export function AppSidebar() {
   const isAdmin = user?.role === 'OWNER' || user?.role === 'HEAD';
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-4 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="font-bold text-sm">IT</span>
+    <Sidebar className="border-r-0">
+      <SidebarHeader className="border-b border-sidebar-border">
+        <div className="flex items-center gap-3 px-3 py-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+            <span className="font-semibold text-sm text-primary-foreground">IT</span>
           </div>
-          <div className="flex flex-col">
-            <span className="font-semibold">InTalk</span>
-            <span className="text-xs text-muted-foreground">Backoffice</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold tracking-tight">InTalk</span>
+            <span className="text-[11px] text-muted-foreground">Backoffice</span>
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>메인 메뉴</SidebarGroupLabel>
+
+      <SidebarContent className="px-2 py-3">
+        <SidebarGroup className="p-0">
+          <SidebarGroupLabel className="px-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+            메뉴
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith(item.url)}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.url)}
+                    className="h-9 px-3 rounded-md text-sm font-normal"
+                  >
                     <Link href={item.url}>
-                      <item.icon />
+                      <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -137,15 +144,21 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>관리자</SidebarGroupLabel>
+          <SidebarGroup className="p-0 mt-4">
+            <SidebarGroupLabel className="px-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+              관리
+            </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 {adminMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith(item.url)}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith(item.url)}
+                      className="h-9 px-3 rounded-md text-sm font-normal"
+                    >
                       <Link href={item.url}>
-                        <item.icon />
+                        <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -156,49 +169,50 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
-      <SidebarFooter>
+
+      <SidebarFooter className="border-t border-sidebar-border p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  className="h-auto py-2 px-2 rounded-md data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="h-8 w-8 rounded-md">
                     <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.name} />
-                    <AvatarFallback className="rounded-lg">
-                      <User2 className="h-4 w-4" />
+                    <AvatarFallback className="rounded-md text-xs">
+                      {user?.name?.charAt(0) || <User2 className="h-4 w-4" />}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user?.name}</span>
+                  <div className="grid flex-1 text-left leading-tight">
+                    <span className="truncate text-sm font-medium">{user?.name}</span>
                     <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
                   </div>
-                  <ChevronUp className="ml-auto size-4" />
+                  <ChevronUp className="ml-auto h-4 w-4 text-muted-foreground" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-52"
                 side="top"
                 align="end"
-                sideOffset={4}
+                sideOffset={8}
               >
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="gap-2 text-sm">
                   <Link href="/profile">
-                    <User2 className="mr-2 h-4 w-4" />
+                    <User2 className="h-4 w-4" />
                     프로필
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="gap-2 text-sm">
                   <Link href="/settings">
-                    <Settings className="mr-2 h-4 w-4" />
+                    <Settings className="h-4 w-4" />
                     설정
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={handleLogout} className="gap-2 text-sm text-destructive focus:text-destructive">
+                  <LogOut className="h-4 w-4" />
                   로그아웃
                 </DropdownMenuItem>
               </DropdownMenuContent>

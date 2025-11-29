@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -113,42 +113,44 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader className="pb-4 border-b">
           <DialogTitle>새 업무</DialogTitle>
-          <DialogDescription>새로운 업무를 생성합니다.</DialogDescription>
+          <DialogDescription>새로운 업무를 생성합니다</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="title">제목 *</Label>
+            <Label htmlFor="title" className="text-sm">제목 *</Label>
             <Input
               id="title"
+              className="h-9"
               {...register('title', { required: '제목을 입력해주세요.' })}
-              placeholder="업무 제목을 입력하세요"
+              placeholder="업무 제목"
             />
             {errors.title && (
-              <p className="text-sm text-destructive">{errors.title.message}</p>
+              <p className="text-xs text-destructive">{errors.title.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">설명</Label>
+            <Label htmlFor="description" className="text-sm">설명</Label>
             <Textarea
               id="description"
               {...register('description')}
-              placeholder="업무에 대한 설명을 입력하세요"
+              placeholder="업무에 대한 설명"
               rows={3}
+              className="resize-none"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>상태</Label>
+              <Label className="text-sm">상태</Label>
               <Select
                 value={watch('status')}
                 onValueChange={(value) => setValue('status', value as TaskStatus)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -162,12 +164,12 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </div>
 
             <div className="space-y-2">
-              <Label>우선순위</Label>
+              <Label className="text-sm">우선순위</Label>
               <Select
                 value={watch('priority')}
                 onValueChange={(value) => setValue('priority', value as TaskPriority)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -180,18 +182,18 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>담당자</Label>
+              <Label className="text-sm">담당자</Label>
               <Select
-                value={watch('assigneeId')}
-                onValueChange={(value) => setValue('assigneeId', value)}
+                value={watch('assigneeId') || 'none'}
+                onValueChange={(value) => setValue('assigneeId', value === 'none' ? '' : value)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="담당자 선택" />
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">없음</SelectItem>
+                  <SelectItem value="none">없음</SelectItem>
                   {teamMembers?.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.name}
@@ -203,16 +205,16 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
 
             {isAdmin && (
               <div className="space-y-2">
-                <Label>팀</Label>
+                <Label className="text-sm">팀</Label>
                 <Select
-                  value={watch('teamId')}
-                  onValueChange={(value) => setValue('teamId', value)}
+                  value={watch('teamId') || 'none'}
+                  onValueChange={(value) => setValue('teamId', value === 'none' ? '' : value)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="팀 선택" />
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="선택" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">없음</SelectItem>
+                    <SelectItem value="none">없음</SelectItem>
                     {teams?.map((team) => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
@@ -225,21 +227,21 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
           </div>
 
           <div className="space-y-2">
-            <Label>마감일</Label>
+            <Label className="text-sm">마감일</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    'w-full justify-start text-left font-normal',
+                    'w-full h-9 justify-start text-left font-normal',
                     !dueDate && 'text-muted-foreground'
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, 'PPP') : '마감일 선택'}
+                  {dueDate ? format(dueDate, 'yyyy년 M월 d일') : '마감일 선택'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={dueDate}
@@ -250,12 +252,19 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </Popover>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="gap-2 pt-4 border-t sm:gap-0">
+            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               취소
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? '생성 중...' : '생성'}
+            <Button type="submit" size="sm" disabled={createMutation.isPending}>
+              {createMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  생성 중...
+                </>
+              ) : (
+                '생성'
+              )}
             </Button>
           </DialogFooter>
         </form>

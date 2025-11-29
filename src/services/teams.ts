@@ -83,6 +83,18 @@ export const removeMember = async (teamId: string, userId: string): Promise<void
   await api.delete(`/teams/${teamId}/members/${userId}`);
 };
 
+// 팀 멤버 이동
+export const transferMember = async (
+  fromTeamId: string,
+  userId: string,
+  toTeamId: string
+): Promise<User> => {
+  const response = await api.patch<User>(
+    `/teams/${fromTeamId}/members/${userId}/transfer/${toTeamId}`
+  );
+  return response.data;
+};
+
 // 팀 공유 설정 조회
 export const getTeamShares = async (teamId: string): Promise<TeamShares> => {
   const response = await api.get<TeamShares>(`/teams/${teamId}/shares`);

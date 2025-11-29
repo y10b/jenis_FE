@@ -1,6 +1,5 @@
 import api from '@/lib/api';
 import type { User } from '@/types';
-import Cookies from 'js-cookie';
 
 export interface LoginRequest {
   email: string;
@@ -16,19 +15,11 @@ export interface SignupRequest {
 
 export interface LoginResponse {
   user: User;
-  accessToken: string;
 }
 
-export interface RefreshResponse {
-  accessToken: string;
-}
-
-// 로그인
+// 로그인 (httpOnly 쿠키는 서버에서 자동 설정됨)
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const response = await api.post<LoginResponse>('/auth/login', data);
-  if (response.data.accessToken) {
-    Cookies.set('access_token', response.data.accessToken);
-  }
   return response.data;
 };
 
@@ -38,19 +29,14 @@ export const signup = async (data: SignupRequest): Promise<User> => {
   return response.data;
 };
 
-// 로그아웃
+// 로그아웃 (httpOnly 쿠키는 서버에서 제거됨)
 export const logout = async (): Promise<void> => {
   await api.post('/auth/logout');
-  Cookies.remove('access_token');
 };
 
-// 토큰 갱신
-export const refreshToken = async (): Promise<RefreshResponse> => {
-  const response = await api.post<RefreshResponse>('/auth/refresh');
-  if (response.data.accessToken) {
-    Cookies.set('access_token', response.data.accessToken);
-  }
-  return response.data;
+// 토큰 갱신 (httpOnly 쿠키는 서버에서 자동 설정됨)
+export const refreshToken = async (): Promise<void> => {
+  await api.post('/auth/refresh');
 };
 
 // 현재 사용자 정보 조회

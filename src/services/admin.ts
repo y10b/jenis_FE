@@ -12,8 +12,8 @@ export interface AdminUserQueryParams {
 
 // 승인 대기 사용자 목록 조회
 export const getPendingUsers = async (): Promise<User[]> => {
-  const response = await api.get<User[]>('/admin/users/pending');
-  return response.data;
+  const response = await api.get<PaginatedResponse<User>>('/admin/users/pending');
+  return response.data.data;
 };
 
 // 전체 사용자 목록 조회
@@ -24,13 +24,13 @@ export const getAllUsers = async (params?: AdminUserQueryParams): Promise<Pagina
 
 // 사용자 승인
 export const approveUser = async (userId: string, teamId?: string): Promise<User> => {
-  const response = await api.patch<User>(`/admin/users/${userId}/approve`, { teamId });
+  const response = await api.post<User>(`/admin/users/${userId}/approve`, { teamId });
   return response.data;
 };
 
 // 사용자 거절
 export const rejectUser = async (userId: string, reason?: string): Promise<User> => {
-  const response = await api.patch<User>(`/admin/users/${userId}/reject`, { reason });
+  const response = await api.post<User>(`/admin/users/${userId}/reject`, { reason });
   return response.data;
 };
 
@@ -48,12 +48,12 @@ export const updateUserTeam = async (userId: string, teamId: string | null): Pro
 
 // 사용자 비활성화
 export const deactivateUser = async (userId: string): Promise<User> => {
-  const response = await api.patch<User>(`/admin/users/${userId}/deactivate`);
+  const response = await api.post<User>(`/admin/users/${userId}/deactivate`);
   return response.data;
 };
 
 // 사용자 활성화
 export const activateUser = async (userId: string): Promise<User> => {
-  const response = await api.patch<User>(`/admin/users/${userId}/activate`);
+  const response = await api.post<User>(`/admin/users/${userId}/activate`);
   return response.data;
 };

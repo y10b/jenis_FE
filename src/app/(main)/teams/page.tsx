@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Users, MoreHorizontal, Trash2, Edit, UserPlus } from 'lucide-react';
+import { Plus, Users, MoreHorizontal, Trash2, Edit, UserPlus, ChevronDown, ChevronUp, ArrowRightLeft } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -24,13 +24,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getTeams, createTeam, deleteTeam } from '@/services/teams';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { getTeams, getTeam, createTeam, deleteTeam, transferMember } from '@/services/teams';
 import { useAuthStore } from '@/stores/auth';
-import type { Team } from '@/types';
+import type { Team, User, UserRole } from '@/types';
+import { Kr2GithubTools } from '@/components/github/kr2-github-tools';
+
+const roleLabels: Record<UserRole, string> = {
+  OWNER: '소유자',
+  HEAD: '헤드',
+  LEAD: '리드',
+  ACTOR: '멤버',
+};
 
 export default function TeamsPage() {
   const queryClient = useQueryClient();
@@ -42,10 +63,20 @@ export default function TeamsPage() {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamDescription, setNewTeamDescription] = useState('');
+  const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<User | null>(null);
+  const [targetTeamId, setTargetTeamId] = useState<string>('');
 
   const { data: teams, isLoading } = useQuery({
     queryKey: ['teams'],
     queryFn: getTeams,
+  });
+
+  const { data: expandedTeamData, isLoading: isLoadingTeamMembers } = useQuery({
+    queryKey: ['team', expandedTeamId],
+    queryFn: () => getTeam(expandedTeamId!),
+    enabled: !!expandedTeamId,
   });
 
   const createMutation = useMutation({
@@ -77,6 +108,23 @@ export default function TeamsPage() {
     },
   });
 
+  const transferMutation = useMutation({
+    mutationFn: ({ userId, toTeamId }: { userId: string; toTeamId: string }) =>
+      transferMember(expandedTeamId!, userId, toTeamId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.invalidateQueries({ queryKey: ['team', expandedTeamId] });
+      toast.success('팀원이 이동되었습니다.');
+      setTransferDialogOpen(false);
+      setSelectedMember(null);
+      setTargetTeamId('');
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || '팀원 이동에 실패했습니다.';
+      toast.error(message);
+    },
+  });
+
   const handleCreate = () => {
     if (!newTeamName.trim()) {
       toast.error('팀 이름을 입력해주세요.');
@@ -93,6 +141,19 @@ export default function TeamsPage() {
       deleteMutation.mutate(selectedTeam.id);
     }
   };
+
+  const handleTransfer = () => {
+    if (selectedMember && targetTeamId) {
+      transferMutation.mutate({ userId: selectedMember.id, toTeamId: targetTeamId });
+    }
+  };
+
+  const toggleTeamExpand = (teamId: string) => {
+    setExpandedTeamId(expandedTeamId === teamId ? null : teamId);
+  };
+
+  // 이동 가능한 팀 목록 (현재 팀 제외)
+  const availableTeamsForTransfer = teams?.filter(t => t.id !== expandedTeamId) || [];
 
   if (isLoading) {
     return <TeamsPageSkeleton />;
@@ -113,62 +174,146 @@ export default function TeamsPage() {
         )}
       </div>
 
+      {/* KR2팀 전용 GitHub 도구 */}
+      <Kr2GithubTools />
+
       {teams && teams.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => (
-            <Card key={team.id}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-semibold">{team.name}</CardTitle>
-                {isOwner && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/teams/${team.id}`}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          수정
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/teams/${team.id}/members`}>
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          멤버 관리
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => {
-                          setSelectedTeam(team);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        삭제
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="mb-4">
-                  {team.description || '설명 없음'}
-                </CardDescription>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      {team._count?.members || 0}명
-                    </span>
+            <Collapsible
+              key={team.id}
+              open={expandedTeamId === team.id}
+              onOpenChange={() => toggleTeamExpand(team.id)}
+            >
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 flex-1">
+                      <CardTitle className="text-lg font-semibold">{team.name}</CardTitle>
+                      {expandedTeamId === team.id ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CollapsibleTrigger>
+                  {isOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/teams/${team.id}`}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            수정
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/teams/${team.id}/members`}>
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            멤버 관리
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => {
+                            setSelectedTeam(team);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          삭제
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="mb-4">
+                    {team.description || '설명 없음'}
+                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {team._count?.members || 0}명
+                      </span>
+                    </div>
+                    <Badge variant="outline">{team.owner?.name}</Badge>
                   </div>
-                  <Badge variant="outline">{team.owner?.name}</Badge>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+                <CollapsibleContent>
+                  <CardContent className="pt-0 border-t">
+                    <div className="pt-4">
+                      <h4 className="text-sm font-medium mb-3">팀원 목록</h4>
+                      {isLoadingTeamMembers && expandedTeamId === team.id ? (
+                        <div className="space-y-2">
+                          {[...Array(3)].map((_, i) => (
+                            <div key={i} className="flex items-center gap-3 p-2">
+                              <Skeleton className="h-8 w-8 rounded-full" />
+                              <div>
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-3 w-32 mt-1" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : expandedTeamData?.members && expandedTeamData.members.length > 0 ? (
+                        <div className="space-y-2">
+                          {expandedTeamData.members.map((member) => (
+                            <div
+                              key={member.id}
+                              className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={member.profileImageUrl || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {member.name.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="text-sm font-medium">{member.name}</p>
+                                  <p className="text-xs text-muted-foreground">{member.email}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {roleLabels[member.role]}
+                                </Badge>
+                                {isOwner && member.role !== 'OWNER' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    title="다른 팀으로 이동"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedMember(member);
+                                      setTransferDialogOpen(true);
+                                    }}
+                                  >
+                                    <ArrowRightLeft className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          팀원이 없습니다.
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
           ))}
         </div>
       ) : (
@@ -244,6 +389,68 @@ export default function TeamsPage() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 팀원 이동 다이얼로그 */}
+      <Dialog open={transferDialogOpen} onOpenChange={(open) => {
+        setTransferDialogOpen(open);
+        if (!open) {
+          setSelectedMember(null);
+          setTargetTeamId('');
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>팀원 이동</DialogTitle>
+            <DialogDescription>
+              &apos;{selectedMember?.name}&apos;님을 다른 팀으로 이동합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={selectedMember?.profileImageUrl || undefined} />
+                <AvatarFallback>{selectedMember?.name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{selectedMember?.name}</p>
+                <p className="text-sm text-muted-foreground">{selectedMember?.email}</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>이동할 팀 선택</Label>
+              <Select value={targetTeamId} onValueChange={setTargetTeamId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="팀을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTeamsForTransfer.length > 0 ? (
+                    availableTeamsForTransfer.map((team) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      이동 가능한 팀이 없습니다
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTransferDialogOpen(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={handleTransfer}
+              disabled={!targetTeamId || transferMutation.isPending}
+            >
+              {transferMutation.isPending ? '이동 중...' : '이동'}
             </Button>
           </DialogFooter>
         </DialogContent>

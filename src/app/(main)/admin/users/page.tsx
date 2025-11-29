@@ -47,6 +47,7 @@ import {
   approveUser,
   rejectUser,
   updateUserRole,
+  updateUserTeam,
   deactivateUser,
   activateUser,
 } from '@/services/admin';
@@ -75,6 +76,8 @@ export default function AdminUsersPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [roleChangeDialogOpen, setRoleChangeDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>('ACTOR');
+  const [teamChangeDialogOpen, setTeamChangeDialogOpen] = useState(false);
+  const [selectedTeamIdForChange, setSelectedTeamIdForChange] = useState<string>('');
 
   const { data: pendingUsers, isLoading: isPendingLoading } = useQuery({
     queryKey: ['admin', 'users', 'pending'],
@@ -152,6 +155,22 @@ export default function AdminUsersPage() {
     },
   });
 
+  const teamChangeMutation = useMutation({
+    mutationFn: ({ userId, teamId }: { userId: string; teamId: string | null }) =>
+      updateUserTeam(userId, teamId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast.success('팀이 변경되었습니다.');
+      setTeamChangeDialogOpen(false);
+      setSelectedUser(null);
+      setSelectedTeamIdForChange('');
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || '팀 변경에 실패했습니다.';
+      toast.error(message);
+    },
+  });
+
   const handleApprove = () => {
     if (selectedUser) {
       approveMutation.mutate({
@@ -166,6 +185,15 @@ export default function AdminUsersPage() {
       roleChangeMutation.mutate({
         userId: selectedUser.id,
         role: selectedRole,
+      });
+    }
+  };
+
+  const handleTeamChange = () => {
+    if (selectedUser) {
+      teamChangeMutation.mutate({
+        userId: selectedUser.id,
+        teamId: selectedTeamIdForChange || null,
       });
     }
   };
@@ -319,6 +347,16 @@ export default function AdminUsersPage() {
                                 <UserCog className="mr-2 h-4 w-4" />
                                 역할 변경
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setSelectedTeamIdForChange(user.teamId || '');
+                                  setTeamChangeDialogOpen(true);
+                                }}
+                              >
+                                <Users className="mr-2 h-4 w-4" />
+                                팀 변경
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               {user.status === 'ACTIVE' ? (
                                 <DropdownMenuItem
@@ -384,12 +422,12 @@ export default function AdminUsersPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">팀 선택 (선택사항)</label>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+              <Select value={selectedTeamId || 'none'} onValueChange={(v) => setSelectedTeamId(v === 'none' ? '' : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="팀을 선택하세요" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">없음</SelectItem>
+                  <SelectItem value="none">없음</SelectItem>
                   {teams?.map((team) => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
@@ -441,6 +479,44 @@ export default function AdminUsersPage() {
             </Button>
             <Button onClick={handleRoleChange} disabled={roleChangeMutation.isPending}>
               {roleChangeMutation.isPending ? '변경 중...' : '변경'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 팀 변경 다이얼로그 */}
+      <Dialog open={teamChangeDialogOpen} onOpenChange={setTeamChangeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>팀 변경</DialogTitle>
+            <DialogDescription>
+              {selectedUser?.name}님의 팀을 변경합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">팀</label>
+              <Select value={selectedTeamIdForChange || 'none'} onValueChange={(v) => setSelectedTeamIdForChange(v === 'none' ? '' : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="팀을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">없음</SelectItem>
+                  {teams?.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTeamChangeDialogOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handleTeamChange} disabled={teamChangeMutation.isPending}>
+              {teamChangeMutation.isPending ? '변경 중...' : '변경'}
             </Button>
           </DialogFooter>
         </DialogContent>

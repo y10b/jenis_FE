@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { login } from '@/services/auth';
 import { useAuthStore } from '@/stores/auth';
 
@@ -35,31 +36,33 @@ export default function LoginPage() {
       const response = await login(data);
       setUser(response.user);
       toast.success('로그인되었습니다.');
-      router.push('/dashboard');
+      setTimeout(() => {
+        router.replace('/dashboard');
+      }, 100);
     } catch (error: any) {
       const message = error.response?.data?.message || '로그인에 실패했습니다.';
       toast.error(message);
-    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">로그인</CardTitle>
-        <CardDescription className="text-center">
-          InTalk 백오피스에 로그인하세요
-        </CardDescription>
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="pb-4">
+        <h1 className="text-xl font-semibold text-center">로그인</h1>
+        <p className="text-sm text-muted-foreground text-center mt-1">
+          계정에 로그인하세요
+        </p>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">이메일</Label>
+            <Label htmlFor="email" className="text-sm">이메일</Label>
             <Input
               id="email"
               type="email"
               placeholder="name@example.com"
+              className="h-10"
               {...register('email', {
                 required: '이메일을 입력해주세요.',
                 pattern: {
@@ -69,14 +72,15 @@ export default function LoginPage() {
               })}
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">비밀번호</Label>
+            <Label htmlFor="password" className="text-sm">비밀번호</Label>
             <Input
               id="password"
               type="password"
+              className="h-10"
               {...register('password', {
                 required: '비밀번호를 입력해주세요.',
                 minLength: {
@@ -86,17 +90,24 @@ export default function LoginPage() {
               })}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-xs text-destructive">{errors.password.message}</p>
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? '로그인 중...' : '로그인'}
+        <CardFooter className="flex flex-col gap-4 pt-2">
+          <Button type="submit" className="w-full h-10" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                로그인 중...
+              </>
+            ) : (
+              '로그인'
+            )}
           </Button>
           <p className="text-sm text-muted-foreground text-center">
             계정이 없으신가요?{' '}
-            <Link href="/signup" className="text-primary hover:underline">
+            <Link href="/signup" className="text-primary font-medium hover:underline">
               회원가입
             </Link>
           </p>
