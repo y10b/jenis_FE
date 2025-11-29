@@ -33,6 +33,9 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
+      // 이전 사용자 정보 초기화
+      setUser(null);
+
       const response = await login(data);
       setUser(response.user);
       toast.success('로그인되었습니다.');
