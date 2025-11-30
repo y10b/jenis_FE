@@ -49,7 +49,16 @@ export async function middleware(request: NextRequest) {
 
   // 쿠키에서 토큰 확인 - accessToken이 있어야 실제 인증된 상태
   const accessToken = request.cookies.get('accessToken');
+  const refreshToken = request.cookies.get('refreshToken');
   const hasAuth = !!accessToken;
+
+  console.log('[Middleware]', {
+    pathname,
+    hasAccessToken: !!accessToken,
+    hasRefreshToken: !!refreshToken,
+    hasAuth,
+    allCookies: request.cookies.getAll().map(c => c.name),
+  });
 
   // 로그인/회원가입 페이지 여부 확인
   const isAuthPath = authPaths.some(
@@ -61,12 +70,16 @@ export async function middleware(request: NextRequest) {
     // IP 검증
     const { isAllowed } = await verifyIp(request);
 
+    console.log('[Middleware] Root page', { isAllowed, hasAuth });
+
     // IP가 허용되고 로그인 정보가 있으면 대시보드로 이동
     if (isAllowed && hasAuth) {
+      console.log('[Middleware] Redirecting to /dashboard');
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
     // 그 외에는 화이트리스트 페이지 표시
+    console.log('[Middleware] Showing whitelist page');
     return NextResponse.next();
   }
 
@@ -75,16 +88,21 @@ export async function middleware(request: NextRequest) {
     // IP 검증
     const { isAllowed } = await verifyIp(request);
 
+    console.log('[Middleware] Auth page', { pathname, isAllowed, hasAuth });
+
     // IP가 허용되지 않으면 화이트리스트 페이지로
     if (!isAllowed) {
+      console.log('[Middleware] IP not allowed, redirecting to /');
       return NextResponse.redirect(new URL('/', request.url));
     }
 
     // 이미 로그인된 사용자가 로그인/회원가입 페이지 접근 시 대시보드로 리다이렉트
     if (hasAuth) {
+      console.log('[Middleware] Already authenticated, redirecting to /dashboard');
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
+    console.log('[Middleware] Showing auth page');
     return NextResponse.next();
   }
 
@@ -92,16 +110,21 @@ export async function middleware(request: NextRequest) {
   // 1. IP 검증
   const { isAllowed } = await verifyIp(request);
 
+  console.log('[Middleware] Protected route', { pathname, isAllowed, hasAuth });
+
   // IP가 허용되지 않으면 화이트리스트 페이지로
   if (!isAllowed) {
+    console.log('[Middleware] IP not allowed, redirecting to /');
     return NextResponse.redirect(new URL('/', request.url));
   }
 
   // 2. 인증 없으면 로그인 페이지로
   if (!hasAuth) {
+    console.log('[Middleware] No auth, redirecting to /login');
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  console.log('[Middleware] Allowing access');
   return NextResponse.next();
 }
 

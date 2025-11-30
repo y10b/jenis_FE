@@ -32,17 +32,28 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
+    console.log('[Login] Starting login...');
     try {
       // 이전 사용자 정보 초기화
       setUser(null);
 
+      console.log('[Login] Calling login API...');
       const response = await login(data);
+      console.log('[Login] Login API response:', response);
+
       setUser(response.user);
+      console.log('[Login] User set in store');
+
+      // 쿠키 확인
+      console.log('[Login] Cookies after login:', document.cookie);
+
       toast.success('로그인되었습니다.');
 
+      console.log('[Login] Redirecting to /dashboard...');
       // 페이지 전체 새로고침으로 쿠키 반영
       window.location.href = '/dashboard';
     } catch (error: any) {
+      console.error('[Login] Login error:', error);
       const message = error.response?.data?.message || '로그인에 실패했습니다.';
       toast.error(message);
       setIsLoading(false);
