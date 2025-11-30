@@ -21,7 +21,13 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
       setIsLoading: (isLoading) => set({ isLoading }),
-      logout: () => set({ user: null, isAuthenticated: false }),
+      logout: () => {
+        set({ user: null, isAuthenticated: false });
+        // localStorage에서 인증 정보 삭제
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth-storage');
+        }
+      },
     }),
     {
       name: 'auth-storage',

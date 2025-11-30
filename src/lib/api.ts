@@ -40,8 +40,8 @@ api.interceptors.response.use(
         // 원래 요청 재시도
         return api(originalRequest);
       } catch (refreshError) {
-        // 갱신 실패 시 로그인 페이지로 이동
-        if (typeof window !== 'undefined') {
+        // 갱신 실패 시 로그인 페이지로 이동 (이미 로그인 페이지면 무시)
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);

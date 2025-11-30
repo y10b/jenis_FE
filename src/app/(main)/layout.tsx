@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -16,10 +15,9 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const { setUser, setIsLoading, isLoading } = useAuthStore();
+  const { user: storedUser, setUser, setIsLoading } = useAuthStore();
 
-  const { data: user, isLoading: isUserLoading, error } = useQuery({
+  const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: getMe,
     retry: false,
@@ -33,14 +31,9 @@ export default function MainLayout({
     }
   }, [user, setUser, setIsLoading]);
 
-  useEffect(() => {
-    if (error) {
-      setIsLoading(false);
-      router.push('/login');
-    }
-  }, [error, router, setIsLoading]);
-
-  if (isUserLoading || isLoading) {
+  // 미들웨어에서 이미 인증 체크를 하므로 로딩 중일 때만 스켈레톤 표시
+  // 저장된 사용자 정보가 있으면 바로 렌더링 (깜빡임 방지)
+  if (isUserLoading && !storedUser) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -51,7 +44,9 @@ export default function MainLayout({
     );
   }
 
-  if (!user) {
+  const displayUser = user || storedUser;
+
+  if (!displayUser) {
     return null;
   }
 
