@@ -39,9 +39,9 @@ export default function LoginPage() {
       const response = await login(data);
       setUser(response.user);
       toast.success('로그인되었습니다.');
-      setTimeout(() => {
-        router.replace('/dashboard');
-      }, 100);
+
+      // 페이지 전체 새로고침으로 쿠키 반영
+      window.location.href = '/dashboard';
     } catch (error: any) {
       const message = error.response?.data?.message || '로그인에 실패했습니다.';
       toast.error(message);
