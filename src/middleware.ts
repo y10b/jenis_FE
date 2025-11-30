@@ -47,10 +47,9 @@ async function verifyIp(request: NextRequest): Promise<{ ip: string; isAllowed: 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 쿠키에서 토큰 확인
+  // 쿠키에서 토큰 확인 - accessToken이 있어야 실제 인증된 상태
   const accessToken = request.cookies.get('accessToken');
-  const refreshToken = request.cookies.get('refreshToken');
-  const hasAuth = accessToken || refreshToken;
+  const hasAuth = !!accessToken;
 
   // 로그인/회원가입 페이지 여부 확인
   const isAuthPath = authPaths.some(
