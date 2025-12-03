@@ -1,5 +1,5 @@
 // 사용자 역할
-export type UserRole = 'OWNER' | 'HEAD' | 'LEAD' | 'ACTOR';
+export type UserRole = 'OWNER' | 'TEAM_LEAD' | 'HEAD' | 'LEAD' | 'ACTOR';
 
 // 사용자 상태
 export type UserStatus = 'PENDING' | 'ACTIVE' | 'INACTIVE';
@@ -197,4 +197,26 @@ export interface DashboardOverview {
     totalTasks: number;
     totalComments: number;
   };
+}
+
+// 팀 문서
+export interface TeamDocument {
+  id: string;
+  teamId: string;
+  creatorId: string;
+  title: string;
+  content: string;
+  tags: string[];
+  isFavorite?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  creator?: Pick<User, 'id' | 'name' | 'email' | 'profileImageUrl'>;
+  team?: Pick<Team, 'id' | 'name'>;
+}
+
+// 문서 목록 응답 (태그 포함)
+export interface DocumentListResponse {
+  data: TeamDocument[];
+  meta: PaginationMeta;
+  allTags: string[];
 }

@@ -20,6 +20,7 @@ import type { UserRole } from '@/types';
 
 const roleLabels: Record<UserRole, string> = {
   OWNER: '대표',
+  TEAM_LEAD: '팀 리드',
   HEAD: '헤드',
   LEAD: '리드',
   ACTOR: '멤버',
@@ -27,6 +28,7 @@ const roleLabels: Record<UserRole, string> = {
 
 const roleBadgeVariants: Record<UserRole, 'default' | 'secondary' | 'outline'> = {
   OWNER: 'default',
+  TEAM_LEAD: 'default',
   HEAD: 'default',
   LEAD: 'secondary',
   ACTOR: 'outline',

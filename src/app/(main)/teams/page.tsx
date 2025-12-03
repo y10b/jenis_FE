@@ -57,7 +57,8 @@ import type { Team, User, UserRole } from '@/types';
 import { Kr2GithubTools } from '@/components/github/kr2-github-tools';
 
 const roleLabels: Record<UserRole, string> = {
-  OWNER: '소유자',
+  OWNER: '대표',
+  TEAM_LEAD: '팀 리드',
   HEAD: '헤드',
   LEAD: '리드',
   ACTOR: '멤버',
@@ -66,7 +67,7 @@ const roleLabels: Record<UserRole, string> = {
 export default function TeamsPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const isOwner = user?.role === 'OWNER';
+  const isOwner = user?.role === 'OWNER' || user?.role === 'TEAM_LEAD';
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

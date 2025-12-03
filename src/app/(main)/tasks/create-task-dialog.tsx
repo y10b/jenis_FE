@@ -52,7 +52,7 @@ interface FormData {
 export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'OWNER' || user?.role === 'HEAD';
+  const isAdmin = user?.role === 'OWNER' || user?.role === 'TEAM_LEAD' || user?.role === 'HEAD';
 
   const {
     register,

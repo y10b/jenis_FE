@@ -228,7 +228,7 @@ export default function TaskDetailPage() {
   const statusInfo = getStatusInfo(task.status);
   const priorityInfo = getPriorityInfo(task.priority);
   const isCreator = user?.id === task.creatorId;
-  const canEdit = isCreator || user?.role === 'OWNER' || user?.role === 'HEAD';
+  const canEdit = isCreator || user?.role === 'OWNER' || user?.role === 'TEAM_LEAD' || user?.role === 'HEAD';
 
   return (
     <div className="space-y-6">

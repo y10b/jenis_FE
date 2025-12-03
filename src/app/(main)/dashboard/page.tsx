@@ -60,7 +60,7 @@ const filterLabels: Record<TaskFilterType, string> = {
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'OWNER' || user?.role === 'HEAD';
+  const isAdmin = user?.role === 'OWNER' || user?.role === 'TEAM_LEAD' || user?.role === 'HEAD';
   const [selectedFilter, setSelectedFilter] = useState<TaskFilterType | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 

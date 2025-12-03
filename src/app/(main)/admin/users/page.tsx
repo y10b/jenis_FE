@@ -55,7 +55,8 @@ import { getTeams } from '@/services/teams';
 import type { User, UserRole, UserStatus } from '@/types';
 
 const roleLabels: Record<UserRole, string> = {
-  OWNER: '소유자',
+  OWNER: '대표',
+  TEAM_LEAD: '팀 리드',
   HEAD: '헤드',
   LEAD: '리드',
   ACTOR: '멤버',
@@ -468,7 +469,8 @@ export default function AdminUsersPage() {
                   <SelectItem value="ACTOR">멤버</SelectItem>
                   <SelectItem value="LEAD">리드</SelectItem>
                   <SelectItem value="HEAD">헤드</SelectItem>
-                  <SelectItem value="OWNER">소유자</SelectItem>
+                  <SelectItem value="TEAM_LEAD">팀 리드</SelectItem>
+                  <SelectItem value="OWNER">대표</SelectItem>
                 </SelectContent>
               </Select>
             </div>

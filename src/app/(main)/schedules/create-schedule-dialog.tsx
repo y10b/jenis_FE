@@ -59,7 +59,7 @@ const scheduleTypeLabels: Record<ScheduleType, { label: string; description: str
 export function CreateScheduleDialog({ open, onOpenChange }: CreateScheduleDialogProps) {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'OWNER' || user?.role === 'HEAD';
+  const isAdmin = user?.role === 'OWNER' || user?.role === 'TEAM_LEAD' || user?.role === 'HEAD';
 
   const {
     register,

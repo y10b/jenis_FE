@@ -13,6 +13,7 @@ import {
   ChevronUp,
   User2,
   FileText,
+  FolderOpen,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -77,6 +78,11 @@ const mainMenuItems = [
     url: '/daily-report',
     icon: FileText,
   },
+  {
+    title: '팀 문서',
+    url: '/documents',
+    icon: FolderOpen,
+  },
 ];
 
 const adminMenuItems = [
@@ -108,7 +114,7 @@ export function AppSidebar() {
     }
   };
 
-  const isAdmin = user?.role === 'OWNER' || user?.role === 'HEAD';
+  const isAdmin = user?.role === 'OWNER' || user?.role === 'TEAM_LEAD' || user?.role === 'HEAD';
 
   return (
     <Sidebar className="border-r-0">

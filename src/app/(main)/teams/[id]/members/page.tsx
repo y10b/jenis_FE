@@ -34,7 +34,8 @@ import { useAuthStore } from '@/stores/auth';
 import type { User, UserRole } from '@/types';
 
 const roleLabels: Record<UserRole, string> = {
-  OWNER: '소유자',
+  OWNER: '대표',
+  TEAM_LEAD: '팀 리드',
   HEAD: '헤드',
   LEAD: '리드',
   ACTOR: '멤버',
@@ -53,7 +54,7 @@ export default function TeamMembersPage() {
   const [selectedMember, setSelectedMember] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const isOwner = user?.role === 'OWNER';
+  const isOwner = user?.role === 'OWNER' || user?.role === 'TEAM_LEAD';
 
   const { data: team, isLoading, error } = useQuery({
     queryKey: ['team', teamId],
