@@ -14,6 +14,7 @@ import {
   User2,
   FileText,
   FolderOpen,
+  KeyRound,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -90,6 +91,11 @@ const adminMenuItems = [
     title: '사용자 관리',
     url: '/admin/users',
     icon: Shield,
+  },
+  {
+    title: '역할별 권한',
+    url: '/admin/roles',
+    icon: KeyRound,
   },
   {
     title: '설정',
